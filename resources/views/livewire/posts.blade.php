@@ -25,7 +25,7 @@
                         placeholder="Search by title..."
                     />
                     <button
-                        wire:click="render"
+                        wire:click="searchPosts"
                         class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                     >
                         Search
@@ -57,9 +57,15 @@
                             <td class="border px-4 py-2">{{ $post->id }}</td>
                             <td class="border px-4 py-2">{{ $post->title }}</td>
                             <td class="border px-4 py-2">{{ $post->description }}</td>
-                            <td class="border px-4 py-2">
-                                <button wire:click="edit({{ $post->id }})" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Edit</button>
-                                <button wire:click="delete({{ $post->id }})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</button>
+                            <td class="border px-4 py-2 text-center">
+                                <div class="flex justify-center space-x-2">
+                                    <button wire:click="edit({{ $post->id }})" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                        Edit
+                                    </button>
+                                    <button wire:click="delete({{ $post->id }})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                                        Delete
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @endforeach

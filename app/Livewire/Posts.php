@@ -22,7 +22,7 @@ class Posts extends Component
             ->when($this->search, function ($query) {
                 $query->where('title', 'like', '%' . $this->search . '%');
             })
-            ->latest() // Order posts by the most recent
+            ->oldest() // Order posts by the most recent
             ->paginate(5); // Paginate the posts (5 posts per page)
 
         // Only pass the posts (items) to the view
@@ -34,6 +34,12 @@ class Posts extends Component
         // Return the view with posts and pagination data
         return view('livewire.posts', compact('pagination'));
     }
+
+    public function searchPosts()
+    {
+    $this->render();
+    }
+
 
     /**
      * Open the modal for creating a new post
