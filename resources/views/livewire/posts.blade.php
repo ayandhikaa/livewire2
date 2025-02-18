@@ -46,6 +46,7 @@
                 <thead>
                     <tr class="bg-gray-100">
                         <th class="px-4 py-2 w-20">No.</th>
+                        <th class="px-4 py-2">Foto</th>
                         <th class="px-4 py-2">Title</th>
                         <th class="px-4 py-2">Description</th>
                         <th class="px-4 py-2">Action</th>
@@ -55,6 +56,15 @@
                     @foreach($posts as $post)
                         <tr>
                             <td class="border px-4 py-2">{{ $post->id }}</td>
+                            <td class="border px-4 py-2">
+                                @if($post->photo)
+                                    <!-- Menampilkan gambar jika ada -->
+                                    <img src="{{ asset('storage/'.$post->photo) }}" alt="Post Photo" class="w-16 h-16 object-cover rounded-full">
+                                @else
+                                    <!-- Jika tidak ada gambar -->
+                                    <span>No Photo</span>
+                                @endif
+                            </td>
                             <td class="border px-4 py-2">{{ $post->title }}</td>
                             <td class="border px-4 py-2">{{ $post->description }}</td>
                             <td class="border px-4 py-2 text-center">
@@ -71,6 +81,7 @@
                     @endforeach
                 </tbody>
             </table>
+            
 
             <div class="mt-4">
                 <!-- Pagination Links -->

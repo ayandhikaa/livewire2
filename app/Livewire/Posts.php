@@ -1,12 +1,15 @@
 <?php
 namespace App\Livewire;
+use Livewire\WithFileUploads;
 
 use Livewire\Component;
 use App\Models\Post;
 
 class Posts extends Component
 {
-    public $posts, $title, $description, $post_id;
+    use WithFileUploads;
+
+    public $posts, $title, $description, $photo, $post_id;
     public $isOpen = 0;
     public $search = '';
 
@@ -81,6 +84,7 @@ class Posts extends Component
     {
         $this->title = '';
         $this->description = '';
+        $this->photo = null;
         $this->post_id = '';
     }
 
@@ -94,12 +98,19 @@ class Posts extends Component
         $this->validate([
             'title' => 'required',
             'description' => 'required',
+            'photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        $photoPath = null;
+        if ($this->photo) {
+            $photoPath = $this->photo->store('posts', 'public'); // Store photo in the 'posts' directory inside 'public' disk
+        }
 
         // Create or update the post
         Post::updateOrCreate(['id' => $this->post_id], [
             'title' => $this->title,
             'description' => $this->description,
+            'photo' => $photoPath,
         ]);
 
         // Flash success message to the session
