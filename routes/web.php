@@ -18,3 +18,4 @@ Route::middleware([
 
     Route::get('posts', Posts::class)->middleware('auth')->name('posts');
 });
+

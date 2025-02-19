@@ -9,10 +9,10 @@ class Posts extends Component
 {
     use WithFileUploads;
 
-    public $posts, $title, $description, $photo, $post_id;
+    public $title, $description, $photo, $post_id;
     public $isOpen = 0;
-    public $search = '';
-
+    public $search;
+    public $rowperPage = 10;
     /**
      * Render the component with the posts and pagination
      *
@@ -20,22 +20,13 @@ class Posts extends Component
      */
     public function render()
     {
-        // Query posts with search functionality
-        $posts = Post::query()
-            ->when($this->search, function ($query) {
-                $query->where('title', 'like', '%' . $this->search . '%');
-            })
-            ->oldest() // Order posts by the most recent
-            ->paginate(5); // Paginate the posts (5 posts per page)
-
-        // Only pass the posts (items) to the view
-        $this->posts = $posts->items();
-
-        // Save the pagination object separately for rendering links in the view
-        $pagination = $posts;
 
         // Return the view with posts and pagination data
-        return view('livewire.posts', compact('pagination'));
+        return view('livewire.posts',[
+            'posts' => $this->search === null ?
+            Post::latest()->paginate($this->rowperPage) :
+            Post::latest()->where('title', 'like', '%'.$this->search.'%')->paginate($this->rowperPage)
+        ] );
     }
 
     public function searchPosts()
@@ -84,7 +75,7 @@ class Posts extends Component
     {
         $this->title = '';
         $this->description = '';
-        $this->photo = null;
+        $this->photo = '';
         $this->post_id = '';
     }
 
@@ -98,12 +89,13 @@ class Posts extends Component
         $this->validate([
             'title' => 'required',
             'description' => 'required',
-            'photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'photo' => $this->post_id ? 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048' : 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        $photoPath = null;
-        if ($this->photo) {
-            $photoPath = $this->photo->store('posts', 'public'); // Store photo in the 'posts' directory inside 'public' disk
+        if ($this->photo && is_object($this->photo)) {
+            $photoPath = $this->photo->store('posts', 'public');
+        } else {
+            $photoPath = $this->post_id ? Post::find($this->post_id)->photo : null;
         }
 
         // Create or update the post
@@ -119,7 +111,7 @@ class Posts extends Component
 
         // Close the modal and reset the form fields
         $this->closeModal();
-        $this->resetInputFields();
+        $this->reset(['title', 'description', 'photo', 'post_id']);
     }
 
     /**
@@ -134,6 +126,7 @@ class Posts extends Component
         $this->post_id = $id;
         $this->title = $post->title;
         $this->description = $post->description;
+        $this->photo = $post->photo;
 
         $this->openModal();
     }
@@ -148,5 +141,6 @@ class Posts extends Component
     {
         Post::find($id)->delete();
         session()->flash('message', 'Post Deleted Successfully.');
+        $this->closeModal();
     }
 }
