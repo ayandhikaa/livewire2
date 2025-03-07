@@ -1,9 +1,12 @@
 <?php
 namespace App\Livewire;
-use Livewire\WithFileUploads;
 
+use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use App\Models\Post;
+use Illuminate\Support\Str;
+
 
 class Posts extends Component
 {
@@ -73,9 +76,9 @@ class Posts extends Component
      */
     private function resetInputFields()
     {
+        $this->photo = null;
         $this->title = '';
         $this->description = '';
-        $this->photo = '';
         $this->post_id = '';
     }
 
@@ -89,20 +92,24 @@ class Posts extends Component
         $this->validate([
             'title' => 'required',
             'description' => 'required',
-            'photo' => $this->post_id ? 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048' : 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        if ($this->photo && is_object($this->photo)) {
-            $photoPath = $this->photo->store('posts', 'public');
-        } else {
-            $photoPath = $this->post_id ? Post::find($this->post_id)->photo : null;
+        if ($this->photo) { //membuat nama gambar
+            $photoName = \Str::slug($this->title,'-')
+            .'-'
+            .uniqid()
+            .'-'.$this->photo->getClientOriginalExtension();
+            $photoPath = $this->photo->storeAs('posts',$photoName,'public'); // Simpan ke storage/public/posts
         }
+
 
         // Create or update the post
         Post::updateOrCreate(['id' => $this->post_id], [
             'title' => $this->title,
-            'description' => $this->description,
             'photo' => $photoPath,
+            'description' => $this->description,
+
         ]);
 
         // Flash success message to the session
@@ -124,9 +131,9 @@ class Posts extends Component
     {
         $post = Post::findOrFail($id);
         $this->post_id = $id;
+        $this->photo = $post->photo;
         $this->title = $post->title;
         $this->description = $post->description;
-        $this->photo = $post->photo;
 
         $this->openModal();
     }
@@ -139,6 +146,12 @@ class Posts extends Component
      */
     public function delete($id)
     {
+        if($post && $post->$photo){
+            $photoPath = "public/" . $post->$photo;
+            if (Storage::exists($photoPath)) {
+            Storage::delete($photoPath);
+            }
+        }
         Post::find($id)->delete();
         session()->flash('message', 'Post Deleted Successfully.');
         $this->closeModal();

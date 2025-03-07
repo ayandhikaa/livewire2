@@ -7,42 +7,42 @@
 
             @if (session()->has('message'))
                 <div class="bg-teal-100 border-t-4 border-teal-500 rounded-b text-teal-900 px-4 py-3 shadow-md my-3" role="alert">
-                    <div class="flex">
-                        <div>
-                            <p class="text-sm">{{ session('message') }}</p>
-                        </div>
+                  <div class="flex">
+                    <div>
+                      <p class="text-sm">{{ session('message') }}</p>
                     </div>
+                  </div>
                 </div>
             @endif
 
-            <!-- Container untuk Create, Paginate, dan Search -->
-            <div class="flex justify-between items-center mb-4">
-                <!-- Create Button -->
+            <div class="flex justify-between my-3">
+                <!-- Search Bar dan Search Button dalam satu baris -->
+                <div class="flex items-center space-x-2">
+                    <input
+                        type="text"
+                        wire:model="search"
+                        class="border px-4 py-2 rounded w-xl"
+                        placeholder="Search by title..."
+                    />
+                    <button
+                        wire:click="searchPosts"
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                        Search
+                    </button>
+                </div>
+
+                <!-- Create New Post Button -->
                 <button wire:click="create()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Create
                 </button>
-
-                <!-- Dropdown Paginate dan Search -->
-                <div class="flex space-x-4">
-                    <!-- Dropdown Paginate -->
-                    <select wire:model.live="rowperPage" class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-200 focus:border-blue-200 px-6">
-                        <option value="2">2</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="20">20</option>
-                    </select>
-
-                    <!-- Search Input -->
-                    <input type="text" wire:model.live="search" placeholder="Cari..." class="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
-                </div>
             </div>
 
             @if($isOpen)
                 @include('livewire.create')
             @endif
 
-            <!-- Tabel Data -->
-            <table class="table-fixed w-full border border-gray-200">
+            <table class="table-fixed w-full">
                 <thead>
                     <tr class="bg-gray-100">
                         <th class="px-4 py-2 w-20">No.</th>
@@ -53,20 +53,18 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($posts as $index => $post)
+                    @foreach($posts as $post)
                         <tr>
-                            <td class="border px-4 py-2 text-center">{{ ($posts->currentPage() - 1) * $posts->perPage() + $index + 1 }}</td>
-                            <td class="border px-4 py-2 text-center">
-                                @if ($photo)
-                                @if (is_string($photo))
-                                    <img src="{{ asset('storage/' . $photo) }}" class="max-w-[120px] max-h-[120px] rounded-md object-contain" alt="Uploaded Photo">
+                            <td class="border px-4 py-2">{{ $post->id }}</td>
+                            <td class="border px-4 py-2">
+                                @if($post->photo)
+                                    <!-- Menampilkan gambar jika ada -->
+                                    <img src="{{ asset('storage/'.$post->photo) }}" alt="Post Photo" class="w-16 h-16 object-cover rounded-full">
                                 @else
-                                    <img src="{{ $photo->temporaryUrl() }}" class="max-w-[120px] max-h-[120px] rounded-md object-contain" alt="Uploaded Photo">
+                                    <!-- Jika tidak ada gambar -->
+                                    <span>No Photo</span>
                                 @endif
-                            @endif
-
                             </td>
-
                             <td class="border px-4 py-2">{{ $post->title }}</td>
                             <td class="border px-4 py-2">{{ $post->description }}</td>
                             <td class="border px-4 py-2 text-center">
@@ -84,9 +82,10 @@
                 </tbody>
             </table>
 
+
             <div class="mt-4">
                 <!-- Pagination Links -->
-                {{ $posts->links() }}
+                {{ $pagination->links() }}
             </div>
         </div>
     </div>

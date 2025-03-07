@@ -10,5 +10,5 @@ class Post extends Model
     /** @use HasFactory<\Database\Factories\PostFactory> */
     use HasFactory;
 
-    Protected $fillable= ['title', 'description'];
+    Protected $fillable= ['photo', 'title', 'description'];
 }
