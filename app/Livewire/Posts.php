@@ -1,18 +1,21 @@
 <?php
 namespace App\Livewire;
-use Livewire\WithFileUploads;
 
+use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use App\Models\Post;
+use Illuminate\Support\Str;
+
 
 class Posts extends Component
 {
     use WithFileUploads;
 
-    public $posts, $title, $description, $photo, $post_id;
+    public $title, $description, $photo, $post_id;
     public $isOpen = 0;
-    public $search = '';
-
+    public $search;
+    public $rowperPage = 10;
     /**
      * Render the component with the posts and pagination
      *
@@ -20,22 +23,13 @@ class Posts extends Component
      */
     public function render()
     {
-        // Query posts with search functionality
-        $posts = Post::query()
-            ->when($this->search, function ($query) {
-                $query->where('title', 'like', '%' . $this->search . '%');
-            })
-            ->oldest() // Order posts by the most recent
-            ->paginate(5); // Paginate the posts (5 posts per page)
-
-        // Only pass the posts (items) to the view
-        $this->posts = $posts->items();
-
-        // Save the pagination object separately for rendering links in the view
-        $pagination = $posts;
 
         // Return the view with posts and pagination data
-        return view('livewire.posts', compact('pagination'));
+        return view('livewire.posts',[
+            'posts' => $this->search === null ?
+            Post::latest()->paginate($this->rowperPage) :
+            Post::latest()->where('title', 'like', '%'.$this->search.'%')->paginate($this->rowperPage)
+        ] );
     }
 
     public function searchPosts()
@@ -82,9 +76,9 @@ class Posts extends Component
      */
     private function resetInputFields()
     {
+        $this->photo = null;
         $this->title = '';
         $this->description = '';
-        $this->photo = null;
         $this->post_id = '';
     }
 
@@ -98,19 +92,24 @@ class Posts extends Component
         $this->validate([
             'title' => 'required',
             'description' => 'required',
-            'photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        $photoPath = null;
-        if ($this->photo) {
-            $photoPath = $this->photo->store('posts', 'public'); // Store photo in the 'posts' directory inside 'public' disk
+        if ($this->photo) { //membuat nama gambar
+            $photoName = \Str::slug($this->title,'-')
+            .'-'
+            .uniqid()
+            .'-'.$this->photo->getClientOriginalExtension();
+            $photoPath = $this->photo->storeAs('posts',$photoName,'public'); // Simpan ke storage/public/posts
         }
+
 
         // Create or update the post
         Post::updateOrCreate(['id' => $this->post_id], [
             'title' => $this->title,
-            'description' => $this->description,
             'photo' => $photoPath,
+            'description' => $this->description,
+
         ]);
 
         // Flash success message to the session
@@ -119,7 +118,7 @@ class Posts extends Component
 
         // Close the modal and reset the form fields
         $this->closeModal();
-        $this->resetInputFields();
+        $this->reset(['title', 'description', 'photo', 'post_id']);
     }
 
     /**
@@ -132,6 +131,7 @@ class Posts extends Component
     {
         $post = Post::findOrFail($id);
         $this->post_id = $id;
+        $this->photo = $post->photo;
         $this->title = $post->title;
         $this->description = $post->description;
 
@@ -146,7 +146,14 @@ class Posts extends Component
      */
     public function delete($id)
     {
+        if($post && $post->$photo){
+            $photoPath = "public/" . $post->$photo;
+            if (Storage::exists($photoPath)) {
+            Storage::delete($photoPath);
+            }
+        }
         Post::find($id)->delete();
         session()->flash('message', 'Post Deleted Successfully.');
+        $this->closeModal();
     }
 }
